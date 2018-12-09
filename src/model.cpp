@@ -4,6 +4,8 @@ namespace sm {
 
 	Model::Model(View * view)
 	: view_(view)
+	, updating_(false)
+	, enabled_(true)
 	{
 	}
 	Model::~Model()
@@ -18,10 +20,23 @@ namespace sm {
 	}
 	void Model::Update()
 	{
+		if (updating_)
+			return;
+
+		updating_ = true;
 		for (auto& trigger : triggers_)
 		{
 			trigger.Run(view_);
 		}
+		updating_ = false;
+	}
+	bool Model::enabled() const
+	{
+		return enabled_;
+	}
+	void Model::toggle_enabled()
+	{
+		enabled_ = !enabled_;
 	}
 	bool Model::LoadTriggers()
 	{

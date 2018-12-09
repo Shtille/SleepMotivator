@@ -3,8 +3,13 @@
 #include "model.h"
 #include "controller.h"
 
+#include "../res/resource.h"
+
 #define MY_TRAY_ICON_ID                     0x1234
-#define ID_TRAY_EXIT_CONTEXT_MENU_ITEM      0x1238
+#define CONTEXT_MENU_ITEM__ENABLE			0x1235
+#define CONTEXT_MENU_ITEM__DISABLE			0x1236
+#define CONTEXT_MENU_ITEM__SETTINGS			0x1237
+#define CONTEXT_MENU_ITEM__EXIT				0x1238
 #define IDT_CHECK_TIMER						0x1
 
 #define NOTIFICATION_TRAY_ICON_MSG (WM_USER + 0x100)
@@ -21,6 +26,10 @@ namespace sm {
 	WinView::WinView()
 	: model_(nullptr)
 	, controller_(nullptr)
+	, window_(NULL)
+	, menu_(NULL)
+	, active_icon_(NULL)
+	, passive_icon_(NULL)
 	{
 	}
 	WinView::~WinView()
@@ -102,8 +111,16 @@ namespace sm {
 			return false;
 
 		menu_ = CreatePopupMenu();
-		//AppendMenu(g_view.hMenu, MF_SEPARATOR, 0, NULL);
-		AppendMenu(menu_, MF_STRING, ID_TRAY_EXIT_CONTEXT_MENU_ITEM, TEXT("Exit"));
+		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__ENABLE, TEXT("Enable"));
+		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__DISABLE, TEXT("Disable"));
+		AppendMenu(menu_, MF_SEPARATOR, 0, NULL);
+		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__SETTINGS, TEXT("Settings"));
+		AppendMenu(menu_, MF_SEPARATOR, 0, NULL);
+		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__EXIT, TEXT("Exit"));
+
+		// Load icons
+		active_icon_ = LoadIconA(hInstance, MAKEINTRESOURCE(IDI_SM_ENABLED));
+		passive_icon_ = LoadIconA(hInstance, MAKEINTRESOURCE(IDI_SM_DISABLED));
 
 		// The window has been created but not displayed.
 		// Now we have a parent window to which a notification tray icon can be associated.
@@ -126,6 +143,19 @@ namespace sm {
 		// TrackPopupMenu blocks the app until TrackPopupMenu returns
 		UINT clicked = TrackPopupMenu(menu_, 0, cur_point.x, cur_point.y, 0, window_, NULL);
 	}
+	void WinView::UpdateContextMenu()
+	{
+		if (model_->enabled())
+		{
+			EnableMenuItem(menu_, CONTEXT_MENU_ITEM__ENABLE, MF_GRAYED);
+			EnableMenuItem(menu_, CONTEXT_MENU_ITEM__DISABLE, MF_ENABLED);
+		}
+		else // disabled
+		{
+			EnableMenuItem(menu_, CONTEXT_MENU_ITEM__ENABLE, MF_ENABLED);
+			EnableMenuItem(menu_, CONTEXT_MENU_ITEM__DISABLE, MF_GRAYED);
+		}
+	}
 	bool WinView::Load()
 	{
 		model_ = new Model(this);
@@ -136,6 +166,9 @@ namespace sm {
 		}
 
 		controller_ = new Controller(model_);
+
+		// Update menu items due to model loading
+		UpdateContextMenu();
 
 		return true;
 	}
@@ -148,6 +181,9 @@ namespace sm {
 	void WinView::EndWindow()
 	{
 		KillTimer(window_, IDT_CHECK_TIMER);
+		DestroyIcon(passive_icon_);
+		DestroyIcon(active_icon_);
+		DestroyMenu(menu_);
 		DestroyWindow(window_);
 	}
 	void WinView::AddTrayIcon()
@@ -156,10 +192,7 @@ namespace sm {
 		ni_data_.cbSize = sizeof(NOTIFYICONDATA);
 		ni_data_.uID = MY_TRAY_ICON_ID;
 		ni_data_.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-
-		// Load the icon to be displayed in the notification tray area.
-		ni_data_.hIcon = LoadIconA(NULL, IDI_ASTERISK);
-
+		ni_data_.hIcon = active_icon_;
 		ni_data_.hWnd = window_;
 		ni_data_.dwInfoFlags = NIIF_INFO;
 		ni_data_.uTimeout = 10000;
@@ -174,6 +207,13 @@ namespace sm {
 	{
 		Shell_NotifyIcon(NIM_DELETE, &ni_data_);
 	}
+	void WinView::UpdateTrayIcon()
+	{
+		HICON icon = (model_ && model_->enabled()) ? active_icon_ : passive_icon_;
+		ni_data_.hIcon = icon;
+		ni_data_.uFlags = NIF_ICON;
+		Shell_NotifyIcon(NIM_MODIFY, &ni_data_);
+	}
 	void WinView::ShowTrayBaloon(const std::string& title, const std::string& message)
 	{
 		strncpy_s(ni_data_.szInfoTitle, title.c_str(), ARRAYSIZE(ni_data_.szInfoTitle));
@@ -184,6 +224,18 @@ namespace sm {
 	void WinView::OnTimer()
 	{
 		model_->Update();
+	}
+	void WinView::OnEnableClick()
+	{
+		model_->toggle_enabled();
+		UpdateContextMenu();
+		UpdateTrayIcon();
+	}
+	void WinView::OnDisableClick()
+	{
+		model_->toggle_enabled();
+		UpdateContextMenu();
+		UpdateTrayIcon();
 	}
 	LRESULT WinView::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
@@ -245,7 +297,15 @@ namespace sm {
 			// Parse the menu selections:
 			switch (wmId)
 			{
-			case ID_TRAY_EXIT_CONTEXT_MENU_ITEM:
+			case CONTEXT_MENU_ITEM__ENABLE:
+				g_view.OnEnableClick();
+				break;
+			case CONTEXT_MENU_ITEM__DISABLE:
+				g_view.OnDisableClick();
+				break;
+			case CONTEXT_MENU_ITEM__SETTINGS:
+				break;
+			case CONTEXT_MENU_ITEM__EXIT:
 				g_view.RemoveTrayIcon();
 				g_view.EndWindow();
 				break;

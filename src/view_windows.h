@@ -36,12 +36,16 @@ namespace sm {
 
 	protected:
 		void ShowContextMenu();
+		void UpdateContextMenu();
 
 		void AddTrayIcon();
 		void RemoveTrayIcon();
+		void UpdateTrayIcon();
 		void ShowTrayBaloon(const std::string& title, const std::string& message);
 
 		void OnTimer();
+		void OnEnableClick();
+		void OnDisableClick();
 
 		static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
@@ -51,6 +55,8 @@ namespace sm {
 
 		HWND window_;
 		HMENU menu_;
+		HICON active_icon_;
+		HICON passive_icon_;
 		NOTIFYICONDATA ni_data_;
 	};
 
