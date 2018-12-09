@@ -38,10 +38,6 @@
     <ClInclude Include="..\..\..\src\trigger.h" />
     <ClInclude Include="..\..\..\src\view.h" />
     <ClInclude Include="..\..\..\src\view_windows.h" />
-    <ClInclude Include="resource.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{21F9116B-682C-4AA8-B882-91418AFF727E}</ProjectGuid>
