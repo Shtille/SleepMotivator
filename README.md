@@ -11,7 +11,7 @@ How to get
 ------------
 
 ```
-git clone https://github.com/Shtille/sleep-motivator.git .
+git clone https://github.com/Shtille/SleepMotivator.git .
 ```
 
 Building
