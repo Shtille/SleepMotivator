@@ -43,6 +43,7 @@ namespace sm {
 		virtual void Notification(const std::string& title, const std::string& message) = 0;
 		virtual MessageBoxResult MessageBox(const std::string& title, const std::string& message, MessageBoxKind kind, MessageBoxIcon icon) = 0;
 		virtual void TimeSelectionBox(const TimeInfo * initial_time, TimeInfo * result_time) = 0;
+		virtual void ShutdownTheSystem() = 0;
 	};
 
 } // namespace sm

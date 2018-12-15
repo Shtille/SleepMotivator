@@ -21,6 +21,7 @@ namespace sm {
 		void toggle_enabled();
 
 	private:
+
 		bool LoadTriggers();
 
 		View * view_;

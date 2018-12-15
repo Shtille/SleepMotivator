@@ -1,27 +1,43 @@
 #include "action.h"
 
+#include "trigger.h"
 #include "view.h"
 
 namespace sm {
 
-	void Action::set_next_first(Action * next)
+	Action * Action::Execute(View * view)
 	{
-		next_first_ = next;
+		return nullptr;
 	}
-	void Action::set_next_second(Action * next)
+
+	ActionTree::ActionTree()
+	: action_root_(nullptr)
 	{
-		next_second_ = next;
 	}
-	Action::Action(Type type)
-	: next_first_(nullptr)
-	, next_second_(nullptr)
-	, type_(type)
+	ActionTree::ActionTree(Action * root)
+	: action_root_(root)
 	{
+	}
+	void ActionTree::Add(Action * action)
+	{
+		actions_list_.push_back(std::unique_ptr<Action>(action));
+	}
+	void ActionTree::SetRoot(Action * root)
+	{
+		action_root_ = root;
+	}
+	void ActionTree::SetDescendants(Action * root, Action * left, Action * right)
+	{
+		root->next_first_ = left;
+		root->next_second_ = right;
+	}
+	Action * ActionTree::root()
+	{
+		return action_root_;
 	}
 
 	NotificationAction::NotificationAction(const std::string& title, const std::string& message)
-	: Action(Action::kNotification)
-	, title_(title)
+	: title_(title)
 	, message_(message)
 	{
 	}
@@ -32,8 +48,7 @@ namespace sm {
 	}
 
 	MessageBoxAction::MessageBoxAction(const std::string& title, const std::string& message, MessageBoxKind answer_kind, MessageBoxIcon icon)
-	: Action(Action::kMessageBox)
-	, title_(title)
+	: title_(title)
 	, message_(message)
 	, answer_kind_(answer_kind)
 	, icon_(icon)
@@ -42,10 +57,40 @@ namespace sm {
 	Action * MessageBoxAction::Execute(View * view)
 	{
 		MessageBoxResult result = view->MessageBox(title_, message_, answer_kind_, icon_);
-		if (result == MessageBoxResult::kNo)
+		if (result == MessageBoxResult::kNo || result == MessageBoxResult::kCancel)
 			return next_second_;
 		else // kYes or kOk
 			return next_first_;
+	}
+
+	TriggerEnableAction::TriggerEnableAction(std::vector<Trigger>& triggers, size_t id, bool enable)
+	: triggers_(triggers)
+	, id_(id)
+	, enable_(enable)
+	{
+	}
+	Action * TriggerEnableAction::Execute(View * view)
+	{
+		triggers_[id_].set_enabled(enable_);
+		return nullptr;
+	}
+
+	TimeChangeAction::TimeChangeAction()
+	{
+	}
+	Action * TimeChangeAction::Execute(View * view)
+	{
+		return nullptr;
+	}
+
+	ShutdownAction::ShutdownAction()
+	{
+	}
+	Action * ShutdownAction::Execute(View * view)
+	{
+		// Temporary disable it :)
+		//view->ShutdownTheSystem();
+		return nullptr;
 	}
 
 } // namespace sm

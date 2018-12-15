@@ -47,6 +47,9 @@ namespace sm {
 		case MessageBoxKind::kOk:
 			type = MB_OK;
 			break;
+		case MessageBoxKind::kOkCancel:
+			type = MB_OKCANCEL;
+			break;
 		case MessageBoxKind::kYesNo:
 			type = MB_YESNO;
 			break;
@@ -80,12 +83,21 @@ namespace sm {
 			return MessageBoxResult::kYes;
 		case IDNO:
 			return MessageBoxResult::kNo;
+		case IDCANCEL:
+			return MessageBoxResult::kCancel;
 		default:
 			return MessageBoxResult::kOk;
 		}
 	}
 	void WinView::TimeSelectionBox(const TimeInfo * initial_time, TimeInfo * result_time)
 	{
+	}
+	void WinView::ShutdownTheSystem()
+	{
+		if (0 == ::InitiateSystemShutdownExA(NULL, "The sleep time has come!", 10, FALSE, FALSE, SHTDN_REASON_MAJOR_APPLICATION | SHTDN_REASON_FLAG_PLANNED))
+		{
+			MessageBoxA(window_, "We've failed to start the shutdown", "So sad", MB_OK | MB_ICONINFORMATION);
+		}
 	}
 	ATOM WinView::MyRegisterClass(HINSTANCE hInstance)
 	{
@@ -165,7 +177,7 @@ namespace sm {
 			return false;
 		}
 
-		controller_ = new Controller(model_);
+		controller_ = new Controller(model_, this);
 
 		// Update menu items due to model loading
 		UpdateContextMenu();

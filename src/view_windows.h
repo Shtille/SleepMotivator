@@ -25,6 +25,7 @@ namespace sm {
 		virtual void Notification(const std::string& title, const std::string& message) final;
 		virtual MessageBoxResult MessageBox(const std::string& title, const std::string& message, MessageBoxKind kind, MessageBoxIcon icon) final;
 		virtual void TimeSelectionBox(const TimeInfo * initial_time, TimeInfo * result_time) final;
+		virtual void ShutdownTheSystem() final;
 
 		ATOM MyRegisterClass(HINSTANCE hInstance);
 		bool Initialize(HINSTANCE hInstance);

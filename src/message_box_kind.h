@@ -6,6 +6,7 @@ namespace sm {
 	//! Kinds of message box
 	enum class MessageBoxKind {
 		kOk,
+		kOkCancel,
 		kYesNo
 	};
 

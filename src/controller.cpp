@@ -6,8 +6,9 @@
 
 namespace sm {
 
-	Controller::Controller(Model * model)
-		: model_(model)
+	Controller::Controller(Model * model, View * view)
+	: model_(model)
+	, view_(view)
 	{
 	}
 	Controller::~Controller()

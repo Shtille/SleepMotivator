@@ -7,7 +7,8 @@ namespace sm {
 	enum class MessageBoxResult {
 		kOk,
 		kYes,
-		kNo
+		kNo,
+		kCancel
 	};
 
 } // namespace sm

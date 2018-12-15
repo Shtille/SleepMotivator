@@ -4,13 +4,15 @@
 #include "event.h"
 #include "action.h"
 
+#include <memory>
+#include <vector>
+
 namespace sm {
 
 	class Trigger {
 	public:
 		Trigger();
-		Trigger(Event * event, Action * action);
-		Trigger(const Trigger& other);
+		Trigger(Event * event, ActionTree & action_tree, bool enabled = true);
 		Trigger(Trigger&& other);
 		~Trigger();
 
@@ -20,8 +22,10 @@ namespace sm {
 		void set_repeatable(bool repeatable);
 
 	private:
-		Event * event_;
-		Action * action_;
+		Trigger(const Trigger& other) = delete;
+
+		std::unique_ptr<Event> event_; //!< event is unique
+		ActionTree action_tree_; //!< but the action can be a tree actually
 		bool enabled_;		// default is true
 		bool repeatable_;	// default is false
 	};
