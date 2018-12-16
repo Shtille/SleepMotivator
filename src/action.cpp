@@ -75,11 +75,17 @@ namespace sm {
 		return nullptr;
 	}
 
-	TimeChangeAction::TimeChangeAction()
+	TimeChangeAction::TimeChangeAction(int * target_hour, int * target_minute, const int * chosen_hour, const int * chosen_minute)
+	: target_hour_(target_hour)
+	, target_minute_(target_minute)
+	, chosen_hour_(chosen_hour)
+	, chosen_minute_(chosen_minute)
 	{
 	}
 	Action * TimeChangeAction::Execute(View * view)
 	{
+		*target_hour_ = *chosen_hour_;
+		*target_minute_ = *chosen_minute_;
 		return nullptr;
 	}
 

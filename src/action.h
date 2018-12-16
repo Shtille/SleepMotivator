@@ -3,6 +3,7 @@
 
 #include "message_box_kind.h"
 #include "message_box_icon.h"
+#include "time_info.h"
 
 #include <memory>
 #include <string>
@@ -88,12 +89,18 @@ namespace sm {
 		bool enable_;
 	};
 
-	//! Shutdown time change action class
+	//! Time change action class
 	class TimeChangeAction : public Action {
 	public:
-		TimeChangeAction();
+		TimeChangeAction(int * target_hour, int * target_minute, const int * chosen_hour, const int * chosen_minute);
 
 		virtual Action * Execute(View * view) final;
+
+	private:
+		int * target_hour_;
+		int * target_minute_;
+		const int * chosen_hour_;
+		const int * chosen_minute_;
 	};
 
 	//! System shutdown action class

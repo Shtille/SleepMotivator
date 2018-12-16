@@ -4,6 +4,13 @@ namespace sm {
 
 	Model::Model(View * view)
 	: view_(view)
+	, get_up_hour_(8)
+	, get_up_minute_(0)
+	, sleep_duration_hours_(8)
+	, sleep_duration_minutes_(0)
+	, chosen_hour_(8)
+	, chosen_minute_(0)
+	, notification_minutes_(10)
 	, updating_(false)
 	, enabled_(true)
 	{
@@ -44,12 +51,15 @@ namespace sm {
 
 		// Dialog trigger
 		{
+			std::string get_up_string = std::string("Are you getting up at ") +
+				std::to_string(get_up_hour_) + std::string(":") + std::to_string(get_up_minute_) + std::string(" ?");
+
 			// First and only add unique actions
 			Action * get_up_action = new MessageBoxAction("Get up", "Are you getting up early tommorow?", MessageBoxKind::kYesNo, MessageBoxIcon::kQuestion);
-			Action * get_up_time_action = new MessageBoxAction("Get up time", "Are you getting up at 8 am?", MessageBoxKind::kYesNo, MessageBoxIcon::kQuestion);
+			Action * get_up_time_action = new MessageBoxAction("Get up time", get_up_string, MessageBoxKind::kYesNo, MessageBoxIcon::kQuestion);
 			Action * chill_action = new MessageBoxAction("Chill out", "Then I won't bother you...", MessageBoxKind::kOk, MessageBoxIcon::kInformation);
 			Action * time_pick_action = new MessageBoxAction("Choose time", "Time picking dialog", MessageBoxKind::kOkCancel, MessageBoxIcon::kWarning);
-			Action * time_change_action = new MessageBoxAction("Time change", "<Time change function call>", MessageBoxKind::kOk, MessageBoxIcon::kWarning);
+			Action * time_change_action = new TimeChangeAction(&get_up_hour_, &get_up_minute_, &chosen_hour_, &chosen_minute_);
 			Action * notification_action = new NotificationAction("Notification", "The program has started its job");
 			Action * activate_action = new TriggerEnableAction(triggers_, 1, true);
 
@@ -76,8 +86,11 @@ namespace sm {
 		}
 		// Shutdown notification trigger
 		{
+			std::string notification_string = std::string("The system shutdown is in ")
+				+ std::to_string(notification_minutes_) + std::string(" minutes!");
+
 			// First and only add unique actions
-			Action * shutdown_notification_action = new NotificationAction("Be ready", "The system shutdown is in 10 minutes!");
+			Action * shutdown_notification_action = new NotificationAction("Be ready", notification_string);
 			Action * shutdown_activation_action = new TriggerEnableAction(triggers_, 2, true);
 
 			// Construct the tree
@@ -89,8 +102,11 @@ namespace sm {
 			tree.SetRoot(shutdown_notification_action);
 			tree.SetDescendants(shutdown_notification_action, shutdown_activation_action, nullptr);
 
+			Event * event = new ShutdownNotificationTimeEvent(&get_up_hour_, &get_up_minute_,
+				&sleep_duration_hours_, &sleep_duration_minutes_, &notification_minutes_);
+
 			// Finally add the only trigger
-			triggers_.emplace_back(Trigger(new TimePassedEvent(1, 10), tree, false));
+			triggers_.emplace_back(Trigger(event, tree, false));
 		}
 		// Shutdown trigger
 		{
@@ -104,8 +120,11 @@ namespace sm {
 
 			tree.SetRoot(shutdown_action);
 
+			Event * event = new ShutdownTimeEvent(&get_up_hour_, &get_up_minute_,
+				&sleep_duration_hours_, &sleep_duration_minutes_);
+
 			// Finally add the only trigger
-			triggers_.emplace_back(Trigger(new TimePassedEvent(1, 10), tree, false));
+			triggers_.emplace_back(Trigger(event, tree, false));
 		}
 		return true;
 	}

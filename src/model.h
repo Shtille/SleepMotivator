@@ -26,6 +26,13 @@ namespace sm {
 
 		View * view_;
 		std::vector<Trigger> triggers_;
+		int get_up_hour_;
+		int get_up_minute_;
+		int sleep_duration_hours_;
+		int sleep_duration_minutes_;
+		int chosen_hour_;
+		int chosen_minute_;
+		int notification_minutes_; // notification time before the shutdown takes place
 		bool updating_; // trick to not let spam multiply messages
 		bool enabled_;
 	};
