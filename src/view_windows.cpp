@@ -511,6 +511,16 @@ namespace sm {
 
 int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+	// Prevent from multiply instances
+	HANDLE hMutex = CreateMutex(NULL, FALSE, NULL);
+	DWORD dwMutexWaitResult = WaitForSingleObject(hMutex, 0);
+	if (dwMutexWaitResult != WAIT_OBJECT_0)
+	{
+		MessageBoxA(HWND_DESKTOP, TEXT("This application is already running"), TEXT("Information"), MB_OK | MB_ICONINFORMATION);
+		CloseHandle(hMutex);
+		return 4;
+	}
+
 	// Register a window class
 	if (g_view.MyRegisterClass(hInstance) == 0)
 	{
