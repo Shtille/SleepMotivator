@@ -134,8 +134,7 @@ namespace sm {
 	}
 	Action * ShutdownAction::Execute(View * view)
 	{
-		// Temporary disable it :)
-		//view->ShutdownTheSystem();
+		view->ShutdownTheSystem();
 		return next_first_;
 	}
 
