@@ -17,6 +17,7 @@ namespace sm {
 
 		void Update();
 
+		bool updating() const;
 		bool enabled() const;
 		void toggle_enabled();
 		void set_get_up_hours(int value);

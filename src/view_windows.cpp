@@ -261,6 +261,9 @@ namespace sm {
 	}
 	void WinView::ShowTimeSettingsDialog()
 	{
+		if (model_->updating())
+			return;
+
 		int hours = model_->get_up_hours();
 		int minutes = model_->get_up_minutes();
 
@@ -279,6 +282,9 @@ namespace sm {
 	}
 	void WinView::ShowDurationSettingsDialog()
 	{
+		if (model_->updating())
+			return;
+
 		int hours = model_->sleep_duration_hours();
 		int minutes = model_->sleep_duration_minutes();
 

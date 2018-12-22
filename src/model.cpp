@@ -37,6 +37,10 @@ namespace sm {
 		}
 		updating_ = false;
 	}
+	bool Model::updating() const
+	{
+		return updating_;
+	}
 	bool Model::enabled() const
 	{
 		return enabled_;
