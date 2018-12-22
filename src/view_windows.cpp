@@ -1,7 +1,6 @@
 #include "view_windows.h"
 
 #include "model.h"
-#include "controller.h"
 
 #include "../res/resource.h"
 
@@ -40,7 +39,6 @@ namespace sm {
 
 	WinView::WinView()
 	: model_(nullptr)
-	, controller_(nullptr)
 	, window_(NULL)
 	, menu_(NULL)
 	, active_icon_(NULL)
@@ -203,8 +201,6 @@ namespace sm {
 			return false;
 		}
 
-		controller_ = new Controller(model_, this);
-
 		// Update menu items due to model loading
 		UpdateContextMenu();
 
@@ -214,7 +210,6 @@ namespace sm {
 	{
 		model_->Deinitialize();
 		delete model_;
-		delete controller_;
 	}
 	void WinView::EndWindow()
 	{

@@ -16,7 +16,6 @@ namespace sm {
 
 	// Forward decalrations
 	class Model;
-	class Controller;
 
 	//! The main point of impl class is not to abuse windows headers
 	class WinView final : public View {
@@ -60,7 +59,6 @@ namespace sm {
 
 	private:
 		Model * model_;
-		Controller * controller_;
 
 		HWND window_;
 		HMENU menu_;

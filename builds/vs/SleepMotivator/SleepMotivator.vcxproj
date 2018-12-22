@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\src\action.cpp" />
-    <ClCompile Include="..\..\..\src\controller.cpp" />
     <ClCompile Include="..\..\..\src\event.cpp" />
     <ClCompile Include="..\..\..\src\model.cpp" />
     <ClCompile Include="..\..\..\src\time_info.cpp" />
@@ -30,7 +29,6 @@
   <ItemGroup>
     <ClInclude Include="..\..\..\res\resource.h" />
     <ClInclude Include="..\..\..\src\action.h" />
-    <ClInclude Include="..\..\..\src\controller.h" />
     <ClInclude Include="..\..\..\src\event.h" />
     <ClInclude Include="..\..\..\src\message_box_icon.h" />
     <ClInclude Include="..\..\..\src\message_box_kind.h" />
