@@ -2,6 +2,9 @@
 
 #include "view.h"
 
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
 #include <shellapi.h>
 
@@ -24,7 +27,7 @@ namespace sm {
 		// Derived from View class
 		virtual void Notification(const std::string& title, const std::string& message) final;
 		virtual MessageBoxResult MessageBox(const std::string& title, const std::string& message, MessageBoxKind kind, MessageBoxIcon icon) final;
-		virtual void TimeSelectionBox(const TimeInfo * initial_time, TimeInfo * result_time) final;
+		virtual bool TimePickDialog(const std::string& title, int * hours_ptr, int * minutes_ptr) final;
 		virtual void ShutdownTheSystem() final;
 
 		ATOM MyRegisterClass(HINSTANCE hInstance);
@@ -44,11 +47,16 @@ namespace sm {
 		void UpdateTrayIcon();
 		void ShowTrayBaloon(const std::string& title, const std::string& message);
 
+		bool ShowTimeDialog();
+		void ShowTimeSettingsDialog();
+		void ShowDurationSettingsDialog();
+
 		void OnTimer();
 		void OnEnableClick();
 		void OnDisableClick();
 
 		static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+		static BOOL CALLBACK TimePickProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
 
 	private:
 		Model * model_;
@@ -59,6 +67,13 @@ namespace sm {
 		HICON active_icon_;
 		HICON passive_icon_;
 		NOTIFYICONDATA ni_data_;
+
+		struct DialogData {
+			std::string title;
+			int * hours_ptr;
+			int * minutes_ptr;
+		};
+		DialogData dialog_data_;
 	};
 
 } // namespace sm

@@ -19,6 +19,15 @@ namespace sm {
 
 		bool enabled() const;
 		void toggle_enabled();
+		void set_get_up_hours(int value);
+		void set_get_up_minutes(int value);
+		void set_sleep_duration_hours(int value);
+		void set_sleep_duration_minutes(int value);
+
+		int get_up_hours() const;
+		int get_up_minutes() const;
+		int sleep_duration_hours() const;
+		int sleep_duration_minutes() const;
 
 	private:
 

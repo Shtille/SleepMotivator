@@ -76,6 +76,19 @@ namespace sm {
 		MessageBoxIcon icon_;
 	};
 
+	//! Time pick dialog class
+	class TimePickDialogAction : public Action {
+	public:
+		TimePickDialogAction(const std::string& title, int * hours_ptr, int * minutes_ptr);
+
+		virtual Action * Execute(View * view) final;
+
+	private:
+		std::string title_;
+		int * hours_ptr_;
+		int * minutes_ptr_;
+	};
+
 	//! Enabling trigger action class
 	class TriggerEnableAction : public Action {
 	public:

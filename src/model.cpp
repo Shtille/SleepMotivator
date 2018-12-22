@@ -45,20 +45,53 @@ namespace sm {
 	{
 		enabled_ = !enabled_;
 	}
+	void Model::set_get_up_hours(int value)
+	{
+		get_up_hour_ = value;
+	}
+	void Model::set_get_up_minutes(int value)
+	{
+		get_up_minute_ = value;
+	}
+	void Model::set_sleep_duration_hours(int value)
+	{
+		sleep_duration_hours_ = value;
+	}
+	void Model::set_sleep_duration_minutes(int value)
+	{
+		sleep_duration_minutes_ = value;
+	}
+	int Model::get_up_hours() const
+	{
+		return get_up_hour_;
+	}
+	int Model::get_up_minutes() const
+	{
+		return get_up_minute_;
+	}
+	int Model::sleep_duration_hours() const
+	{
+		return sleep_duration_hours_;
+	}
+	int Model::sleep_duration_minutes() const
+	{
+		return sleep_duration_minutes_;
+	}
 	bool Model::LoadTriggers()
 	{
 		// Currently manually add triggers
 
 		// Dialog trigger
 		{
-			std::string get_up_string = std::string("Are you getting up at ") +
-				std::to_string(get_up_hour_) + std::string(":") + std::to_string(get_up_minute_) + std::string(" ?");
+			char buffer[64];
+			snprintf(buffer, 64, "Are you getting up at %i:%02i ?", get_up_hour_, get_up_minute_);
+			std::string get_up_string(buffer);
 
 			// First and only add unique actions
 			Action * get_up_action = new MessageBoxAction("Get up", "Are you getting up early tommorow?", MessageBoxKind::kYesNo, MessageBoxIcon::kQuestion);
 			Action * get_up_time_action = new MessageBoxAction("Get up time", get_up_string, MessageBoxKind::kYesNo, MessageBoxIcon::kQuestion);
 			Action * chill_action = new MessageBoxAction("Chill out", "Then I won't bother you...", MessageBoxKind::kOk, MessageBoxIcon::kInformation);
-			Action * time_pick_action = new MessageBoxAction("Choose time", "Time picking dialog", MessageBoxKind::kOkCancel, MessageBoxIcon::kWarning);
+			Action * time_pick_action = new TimePickDialogAction("Choose get up time", &chosen_hour_, &chosen_minute_);
 			Action * time_change_action = new TimeChangeAction(&get_up_hour_, &get_up_minute_, &chosen_hour_, &chosen_minute_);
 			Action * notification_action = new NotificationAction("Notification", "The program has started its job");
 			Action * activate_action = new TriggerEnableAction(triggers_, 1, true);

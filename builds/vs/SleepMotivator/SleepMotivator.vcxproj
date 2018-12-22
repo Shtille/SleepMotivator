@@ -28,6 +28,7 @@
     <ClCompile Include="..\..\..\src\view_windows.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\res\resource.h" />
     <ClInclude Include="..\..\..\src\action.h" />
     <ClInclude Include="..\..\..\src\controller.h" />
     <ClInclude Include="..\..\..\src\event.h" />
@@ -42,6 +43,10 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\..\res\resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\res\cat_active.ico" />
+    <Image Include="..\..\..\res\cat_passive.ico" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{21F9116B-682C-4AA8-B882-91418AFF727E}</ProjectGuid>

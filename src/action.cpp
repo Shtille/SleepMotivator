@@ -63,6 +63,20 @@ namespace sm {
 			return next_first_;
 	}
 
+	TimePickDialogAction::TimePickDialogAction(const std::string & title, int * hours_ptr, int * minutes_ptr)
+	: title_(title)
+	, hours_ptr_(hours_ptr)
+	, minutes_ptr_(minutes_ptr)
+	{
+	}
+	Action * TimePickDialogAction::Execute(View * view)
+	{
+		if (view->TimePickDialog(title_, hours_ptr_, minutes_ptr_)) // OK
+			return next_first_;
+		else // Cancel
+			return next_second_;
+	}
+
 	TriggerEnableAction::TriggerEnableAction(std::vector<Trigger>& triggers, size_t id, bool enable)
 	: triggers_(triggers)
 	, id_(id)

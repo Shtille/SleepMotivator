@@ -5,12 +5,27 @@
 
 #include "../res/resource.h"
 
-#define MY_TRAY_ICON_ID                     0x1234
-#define CONTEXT_MENU_ITEM__ENABLE			0x1235
-#define CONTEXT_MENU_ITEM__DISABLE			0x1236
-#define CONTEXT_MENU_ITEM__SETTINGS			0x1237
-#define CONTEXT_MENU_ITEM__EXIT				0x1238
-#define IDT_CHECK_TIMER						0x1
+#include <CommCtrl.h>
+
+// Enable visual styles
+// See https://docs.microsoft.com/en-us/windows/desktop/controls/cookbook-overview for details
+#ifdef _WIN64
+#pragma comment(linker,"\"/manifestdependency:type='win64' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#else
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+#endif
+
+#define MY_TRAY_ICON_ID							0x1234
+#define CONTEXT_MENU_ITEM__ENABLE				0x1235
+#define CONTEXT_MENU_ITEM__DISABLE				0x1236
+#define CONTEXT_MENU_ITEM__SETTINGS_TIME		0x1237
+#define CONTEXT_MENU_ITEM__SETTINGS_DURATION	0x1238
+#define CONTEXT_MENU_ITEM__EXIT					0x1239
+#define IDT_CHECK_TIMER							0x1
 
 #define NOTIFICATION_TRAY_ICON_MSG (WM_USER + 0x100)
 
@@ -89,8 +104,13 @@ namespace sm {
 			return MessageBoxResult::kOk;
 		}
 	}
-	void WinView::TimeSelectionBox(const TimeInfo * initial_time, TimeInfo * result_time)
+	bool WinView::TimePickDialog(const std::string& title, int * hours_ptr, int * minutes_ptr)
 	{
+		dialog_data_.title = title;
+		dialog_data_.hours_ptr = hours_ptr;
+		dialog_data_.minutes_ptr = minutes_ptr;
+
+		return ShowTimeDialog();
 	}
 	void WinView::ShutdownTheSystem()
 	{
@@ -122,11 +142,17 @@ namespace sm {
 		if (!window_)
 			return false;
 
+		// Create settings popup submenu
+		HMENU submenu = CreatePopupMenu();
+		AppendMenu(submenu, MF_STRING, CONTEXT_MENU_ITEM__SETTINGS_TIME, TEXT("Set get up time"));
+		AppendMenu(submenu, MF_STRING, CONTEXT_MENU_ITEM__SETTINGS_DURATION, TEXT("Set sleep duration"));
+
+		// Create popup menu
 		menu_ = CreatePopupMenu();
 		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__ENABLE, TEXT("Enable"));
 		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__DISABLE, TEXT("Disable"));
 		AppendMenu(menu_, MF_SEPARATOR, 0, NULL);
-		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__SETTINGS, TEXT("Settings"));
+		AppendMenu(menu_, MF_STRING | MF_POPUP, (UINT_PTR)submenu, TEXT("Settings"));
 		AppendMenu(menu_, MF_SEPARATOR, 0, NULL);
 		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__EXIT, TEXT("Exit"));
 
@@ -233,6 +259,47 @@ namespace sm {
 		ni_data_.uFlags = NIF_INFO;
 		Shell_NotifyIcon(NIM_MODIFY, &ni_data_);
 	}
+	bool WinView::ShowTimeDialog()
+	{
+		HINSTANCE hInstance = (HINSTANCE)GetWindowLong(window_, GWL_HINSTANCE);
+		return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_TIME_DIALOG), HWND_DESKTOP, (DLGPROC)TimePickProc, (LPARAM)&dialog_data_) == IDOK;
+	}
+	void WinView::ShowTimeSettingsDialog()
+	{
+		int hours = model_->get_up_hours();
+		int minutes = model_->get_up_minutes();
+
+		dialog_data_.title = TEXT("Change get up time");
+		dialog_data_.hours_ptr = &hours;
+		dialog_data_.minutes_ptr = &minutes;
+
+		if (ShowTimeDialog())
+		{
+			model_->set_get_up_hours(hours);
+			model_->set_get_up_minutes(minutes);
+		}
+		// Finally invalidate pointers
+		dialog_data_.hours_ptr = nullptr;
+		dialog_data_.minutes_ptr = nullptr;
+	}
+	void WinView::ShowDurationSettingsDialog()
+	{
+		int hours = model_->sleep_duration_hours();
+		int minutes = model_->sleep_duration_minutes();
+
+		dialog_data_.title = TEXT("Change sleep duration");
+		dialog_data_.hours_ptr = &hours;
+		dialog_data_.minutes_ptr = &minutes;
+
+		if (ShowTimeDialog())
+		{
+			model_->set_sleep_duration_hours(hours);
+			model_->set_sleep_duration_minutes(minutes);
+		}
+		// Finally invalidate pointers
+		dialog_data_.hours_ptr = nullptr;
+		dialog_data_.minutes_ptr = nullptr;
+	}
 	void WinView::OnTimer()
 	{
 		model_->Update();
@@ -315,7 +382,11 @@ namespace sm {
 			case CONTEXT_MENU_ITEM__DISABLE:
 				g_view.OnDisableClick();
 				break;
-			case CONTEXT_MENU_ITEM__SETTINGS:
+			case CONTEXT_MENU_ITEM__SETTINGS_TIME:
+				g_view.ShowTimeSettingsDialog();
+				break;
+			case CONTEXT_MENU_ITEM__SETTINGS_DURATION:
+				g_view.ShowDurationSettingsDialog();
 				break;
 			case CONTEXT_MENU_ITEM__EXIT:
 				g_view.RemoveTrayIcon();
@@ -329,6 +400,110 @@ namespace sm {
 			return DefWindowProc(hWnd, uMsg, wParam, lParam);
 		}
 		return 0;
+	}
+
+	BOOL WinView::TimePickProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		static WinView::DialogData * data = NULL;
+		HWND control_hwnd;
+		TCHAR buffer[8];
+		RECT rc;
+		int x, y;
+
+		switch (message)
+		{
+		case WM_INITDIALOG:
+			data = (WinView::DialogData *)lParam;
+			// Center dialog window
+			GetWindowRect(hwndDlg, &rc);
+			x = (GetSystemMetrics(SM_CXSCREEN) - rc.right) / 2;
+			y = (GetSystemMetrics(SM_CYSCREEN) - rc.bottom) / 2;
+			SetWindowPos(hwndDlg, HWND_TOP, x, y, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
+			// Dialog caption
+			SetWindowText(hwndDlg, data->title.c_str());
+			// Hours slider
+			control_hwnd = GetDlgItem(hwndDlg, IDC_HOURS_SLIDER);
+			SendMessage(control_hwnd, TBM_SETRANGE,
+				(WPARAM)TRUE,				// redraw flag 
+				(LPARAM)MAKELONG(0, 23));	// min. & max. positions
+			SendMessage(control_hwnd, TBM_SETPOS,
+				(WPARAM)TRUE,				// redraw flag
+				(LPARAM)*data->hours_ptr);	// initial position
+			// Minutes slider
+			control_hwnd = GetDlgItem(hwndDlg, IDC_MINUTES_SLIDER);
+			SendMessage(control_hwnd, TBM_SETRANGE,
+				(WPARAM)TRUE,				// redraw flag 
+				(LPARAM)MAKELONG(0, 59));	// min. & max. positions
+			SendMessage(control_hwnd, TBM_SETPOS,
+				(WPARAM)TRUE,				// redraw flag 
+				(LPARAM)*data->minutes_ptr);// initial position
+			// Set text for edit and static labels
+			sprintf_s(buffer, "%i", *data->hours_ptr);
+			SetDlgItemText(hwndDlg, IDC_HOURS_STATIC, buffer);
+			sprintf_s(buffer, "%i", *data->minutes_ptr);
+			SetDlgItemText(hwndDlg, IDC_MINUTES_STATIC, buffer);
+			sprintf_s(buffer, "%i:%02i", *data->hours_ptr, *data->minutes_ptr);
+			SetDlgItemText(hwndDlg, IDC_TIME_EDIT, buffer);
+			break;
+		case WM_HSCROLL:
+		case WM_VSCROLL:
+			switch (LOWORD(wParam))
+			{
+			case TB_THUMBPOSITION:
+			case TB_THUMBTRACK:
+				switch (GetDlgCtrlID((HWND)lParam))
+				{
+				case IDC_HOURS_SLIDER:
+					*data->hours_ptr = HIWORD(wParam);
+					sprintf_s(buffer, "%i", *data->hours_ptr);
+					SetDlgItemText(hwndDlg, IDC_HOURS_STATIC, buffer);
+					sprintf_s(buffer, "%i:%02i", *data->hours_ptr, *data->minutes_ptr);
+					SetDlgItemText(hwndDlg, IDC_TIME_EDIT, buffer);
+					break;
+				case IDC_MINUTES_SLIDER:
+					*data->minutes_ptr = HIWORD(wParam);
+					sprintf_s(buffer, "%i", *data->minutes_ptr);
+					SetDlgItemText(hwndDlg, IDC_MINUTES_STATIC, buffer);
+					sprintf_s(buffer, "%i:%02i", *data->hours_ptr, *data->minutes_ptr);
+					SetDlgItemText(hwndDlg, IDC_TIME_EDIT, buffer);
+					break;
+				}
+				break;
+			case TB_ENDTRACK:
+				switch (GetDlgCtrlID((HWND)lParam))
+				{
+				case IDC_HOURS_SLIDER:
+					control_hwnd = GetDlgItem(hwndDlg, IDC_HOURS_SLIDER);
+					*data->hours_ptr = SendMessage(control_hwnd, TBM_GETPOS, 0, 0);
+					sprintf_s(buffer, "%i", *data->hours_ptr);
+					SetDlgItemText(hwndDlg, IDC_HOURS_STATIC, buffer);
+					sprintf_s(buffer, "%i:%02i", *data->hours_ptr, *data->minutes_ptr);
+					SetDlgItemText(hwndDlg, IDC_TIME_EDIT, buffer);
+					break;
+				case IDC_MINUTES_SLIDER:
+					control_hwnd = GetDlgItem(hwndDlg, IDC_MINUTES_SLIDER);
+					*data->minutes_ptr = SendMessage(control_hwnd, TBM_GETPOS, 0, 0);
+					sprintf_s(buffer, "%i", *data->minutes_ptr);
+					SetDlgItemText(hwndDlg, IDC_MINUTES_STATIC, buffer);
+					sprintf_s(buffer, "%i:%02i", *data->hours_ptr, *data->minutes_ptr);
+					SetDlgItemText(hwndDlg, IDC_TIME_EDIT, buffer);
+					break;
+				}
+				break;
+			}
+			break;
+		case WM_COMMAND:
+			switch (LOWORD(wParam))
+			{
+			case IDOK:
+				EndDialog(hwndDlg, wParam);
+				return TRUE;
+			case IDCANCEL:
+				EndDialog(hwndDlg, wParam);
+				return TRUE;
+			}
+		}
+		return FALSE;
 	}
 
 } // namespace sm
