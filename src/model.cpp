@@ -1,5 +1,9 @@
 #include "model.h"
 
+namespace {
+	const char * kConfigFile = "config.ini";
+}
+
 namespace sm {
 
 	Model::Model(View * view)
@@ -20,10 +24,15 @@ namespace sm {
 	}
 	bool Model::Initialize()
 	{
-		return LoadTriggers();
+		if (!LoadParameters())
+			return false;
+		if (!LoadTriggers())
+			return false;
+		return true;
 	}
 	void Model::Deinitialize()
 	{
+		SaveParameters();
 	}
 	void Model::Update()
 	{
@@ -81,6 +90,32 @@ namespace sm {
 	{
 		return sleep_duration_minutes_;
 	}
+	bool Model::LoadParameters()
+	{
+		if (!ini_file_.OpenForRead(kConfigFile))
+		{
+			// We gonna use default parameters then
+			return true;
+		}
+		IniFileReader reader(this);
+		ini_file_.Read(&reader);
+		ini_file_.Close();
+		// Finally update dialog values
+		chosen_hour_ = get_up_hour_;
+		chosen_minute_ = get_up_minute_;
+		return true;
+	}
+	void Model::SaveParameters()
+	{
+		if (!ini_file_.OpenForWrite(kConfigFile))
+			return;
+		ini_file_.WritePair("version", "1");
+		ini_file_.WritePair("get_up_hours", std::to_string(get_up_hour_).c_str());
+		ini_file_.WritePair("get_up_minutes", std::to_string(get_up_minute_).c_str());
+		ini_file_.WritePair("sleep_duration_hours", std::to_string(sleep_duration_hours_).c_str());
+		ini_file_.WritePair("sleep_duration_minutes", std::to_string(sleep_duration_minutes_).c_str());
+		ini_file_.Close();
+	}
 	bool Model::LoadTriggers()
 	{
 		// Currently manually add triggers
@@ -97,7 +132,7 @@ namespace sm {
 			Action * chill_action = new MessageBoxAction("Chill out", "Then I won't bother you...", MessageBoxKind::kOk, MessageBoxIcon::kInformation);
 			Action * time_pick_action = new TimePickDialogAction("Choose get up time", &chosen_hour_, &chosen_minute_);
 			Action * time_change_action = new TimeChangeAction(&get_up_hour_, &get_up_minute_, &chosen_hour_, &chosen_minute_);
-			Action * notification_action = new NotificationAction("Notification", "The program has started its job");
+			Action * notification_action = new NotificationAction("The motivation has begun", "The program has started its job for motivating you!");
 			Action * activate_action = new TriggerEnableAction(triggers_, 1, true);
 
 			// Construct the tree
@@ -164,6 +199,30 @@ namespace sm {
 			triggers_.emplace_back(Trigger(event, tree, false));
 		}
 		return true;
+	}
+
+	Model::IniFileReader::IniFileReader(Model * model)
+	: model_(model)
+	{
+	}
+	void Model::IniFileReader::OnSection(const char * section_name)
+	{
+		// Skip section
+	}
+	void Model::IniFileReader::OnPair(const char * key, const char * value)
+	{
+		if (strcmp(key, "version") == 0)
+		{
+			// Skip version
+		}
+		else if (strcmp(key, "get_up_hours") == 0)
+			model_->get_up_hour_ = ::atoi(value);
+		else if (strcmp(key, "get_up_minutes") == 0)
+			model_->get_up_minute_ = ::atoi(value);
+		else if (strcmp(key, "sleep_duration_hours") == 0)
+			model_->sleep_duration_hours_ = ::atoi(value);
+		else if (strcmp(key, "sleep_duration_minutes") == 0)
+			model_->sleep_duration_minutes_ = ::atoi(value);
 	}
 
 } // namespace sm

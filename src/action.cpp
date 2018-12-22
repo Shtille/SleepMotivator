@@ -100,7 +100,7 @@ namespace sm {
 	{
 		*target_hour_ = *chosen_hour_;
 		*target_minute_ = *chosen_minute_;
-		return nullptr;
+		return next_first_;
 	}
 
 	ShutdownAction::ShutdownAction()
@@ -110,7 +110,7 @@ namespace sm {
 	{
 		// Temporary disable it :)
 		//view->ShutdownTheSystem();
-		return nullptr;
+		return next_first_;
 	}
 
 } // namespace sm

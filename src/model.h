@@ -2,12 +2,14 @@
 #define __MODEL_H__
 
 #include "trigger.h"
+#include "ini_file.h"
 
 #include <vector>
 
 namespace sm {
 
 	class Model {
+		friend class IniFileReader;
 	public:
 		Model(View * view);
 		~Model();
@@ -32,9 +34,23 @@ namespace sm {
 
 	private:
 
+		bool LoadParameters();
+		void SaveParameters();
 		bool LoadTriggers();
 
+		class IniFileReader : public IniFileReaderInterface {
+		public:
+			IniFileReader(Model * model);
+
+			virtual void OnSection(const char* section_name) final;
+			virtual void OnPair(const char* key, const char* value) final;
+
+		private:
+			Model * model_;
+		};
+
 		View * view_;
+		IniFile ini_file_;
 		std::vector<Trigger> triggers_;
 		int get_up_hour_;
 		int get_up_minute_;
