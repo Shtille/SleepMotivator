@@ -23,7 +23,8 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #define CONTEXT_MENU_ITEM__DISABLE				0x1236
 #define CONTEXT_MENU_ITEM__SETTINGS_TIME		0x1237
 #define CONTEXT_MENU_ITEM__SETTINGS_DURATION	0x1238
-#define CONTEXT_MENU_ITEM__EXIT					0x1239
+#define CONTEXT_MENU_ITEM__SETTINGS_STURTUP		0x1239
+#define CONTEXT_MENU_ITEM__EXIT					0x1240
 #define IDT_CHECK_TIMER							0x1
 
 #define NOTIFICATION_TRAY_ICON_MSG (WM_USER + 0x100)
@@ -141,16 +142,17 @@ namespace sm {
 			return false;
 
 		// Create settings popup submenu
-		HMENU submenu = CreatePopupMenu();
-		AppendMenu(submenu, MF_STRING, CONTEXT_MENU_ITEM__SETTINGS_TIME, TEXT("Set get up time"));
-		AppendMenu(submenu, MF_STRING, CONTEXT_MENU_ITEM__SETTINGS_DURATION, TEXT("Set sleep duration"));
+		submenu_ = CreatePopupMenu();
+		AppendMenu(submenu_, MF_STRING, CONTEXT_MENU_ITEM__SETTINGS_TIME, TEXT("Set get up time"));
+		AppendMenu(submenu_, MF_STRING, CONTEXT_MENU_ITEM__SETTINGS_DURATION, TEXT("Set sleep duration"));
+		AppendMenu(submenu_, MF_STRING, CONTEXT_MENU_ITEM__SETTINGS_STURTUP, TEXT("Loading on startup"));
 
 		// Create popup menu
 		menu_ = CreatePopupMenu();
 		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__ENABLE, TEXT("Enable"));
 		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__DISABLE, TEXT("Disable"));
 		AppendMenu(menu_, MF_SEPARATOR, 0, NULL);
-		AppendMenu(menu_, MF_STRING | MF_POPUP, (UINT_PTR)submenu, TEXT("Settings"));
+		AppendMenu(menu_, MF_STRING | MF_POPUP, (UINT_PTR)submenu_, TEXT("Settings"));
 		AppendMenu(menu_, MF_SEPARATOR, 0, NULL);
 		AppendMenu(menu_, MF_STRING, CONTEXT_MENU_ITEM__EXIT, TEXT("Exit"));
 
@@ -191,6 +193,23 @@ namespace sm {
 			EnableMenuItem(menu_, CONTEXT_MENU_ITEM__ENABLE, MF_ENABLED);
 			EnableMenuItem(menu_, CONTEXT_MENU_ITEM__DISABLE, MF_GRAYED);
 		}
+		if (model_->startup_loading())
+			CheckMenuItem(submenu_, CONTEXT_MENU_ITEM__SETTINGS_STURTUP, MF_CHECKED);
+		else
+			CheckMenuItem(submenu_, CONTEXT_MENU_ITEM__SETTINGS_STURTUP, MF_UNCHECKED);
+	}
+	void WinView::MakeLoadingOnStartup()
+	{
+		CHAR szFileName[MAX_PATH];
+		GetModuleFileNameA(NULL, szFileName, MAX_PATH);
+
+		HKEY hkey = NULL;
+		RegCreateKeyA(HKEY_CURRENT_USER, TEXT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"), &hkey);
+		if (model_->startup_loading())
+			RegSetValueExA(hkey, kApplicationClassName, 0, REG_SZ, (BYTE*)szFileName, 0);
+		else
+			RegDeleteValueA(hkey, kApplicationClassName);
+		RegCloseKey(hkey);
 	}
 	bool WinView::Load()
 	{
@@ -317,6 +336,12 @@ namespace sm {
 		UpdateContextMenu();
 		UpdateTrayIcon();
 	}
+	void WinView::OnStartupLoadingClick()
+	{
+		model_->toggle_startup_loading();
+		UpdateContextMenu();
+		MakeLoadingOnStartup();
+	}
 	LRESULT WinView::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		int wmId, wmEvent;
@@ -388,6 +413,9 @@ namespace sm {
 				break;
 			case CONTEXT_MENU_ITEM__SETTINGS_DURATION:
 				g_view.ShowDurationSettingsDialog();
+				break;
+			case CONTEXT_MENU_ITEM__SETTINGS_STURTUP:
+				g_view.OnStartupLoadingClick();
 				break;
 			case CONTEXT_MENU_ITEM__EXIT:
 				g_view.RemoveTrayIcon();

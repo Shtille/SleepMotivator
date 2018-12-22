@@ -17,6 +17,7 @@ namespace sm {
 	, notification_minutes_(10)
 	, updating_(false)
 	, enabled_(true)
+	, startup_loading_(false)
 	{
 	}
 	Model::~Model()
@@ -53,6 +54,14 @@ namespace sm {
 	bool Model::enabled() const
 	{
 		return enabled_;
+	}
+	bool Model::startup_loading() const
+	{
+		return startup_loading_;
+	}
+	void Model::toggle_startup_loading()
+	{
+		startup_loading_ = !startup_loading_;
 	}
 	void Model::toggle_enabled()
 	{
@@ -109,11 +118,12 @@ namespace sm {
 	{
 		if (!ini_file_.OpenForWrite(kConfigFile))
 			return;
-		ini_file_.WritePair("version", "1");
+		ini_file_.WritePair("version", "2");
 		ini_file_.WritePair("get_up_hours", std::to_string(get_up_hour_).c_str());
 		ini_file_.WritePair("get_up_minutes", std::to_string(get_up_minute_).c_str());
 		ini_file_.WritePair("sleep_duration_hours", std::to_string(sleep_duration_hours_).c_str());
 		ini_file_.WritePair("sleep_duration_minutes", std::to_string(sleep_duration_minutes_).c_str());
+		ini_file_.WritePair("startup_loading", (startup_loading_) ? "true" : "false");
 		ini_file_.Close();
 	}
 	bool Model::LoadTriggers()
@@ -223,6 +233,8 @@ namespace sm {
 			model_->sleep_duration_hours_ = ::atoi(value);
 		else if (strcmp(key, "sleep_duration_minutes") == 0)
 			model_->sleep_duration_minutes_ = ::atoi(value);
+		else if (strcmp(key, "startup_loading") == 0)
+			model_->startup_loading_ = (strcmp(value, "true") == 0);
 	}
 
 } // namespace sm

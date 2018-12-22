@@ -41,6 +41,8 @@ namespace sm {
 		void ShowContextMenu();
 		void UpdateContextMenu();
 
+		void MakeLoadingOnStartup();
+
 		void AddTrayIcon();
 		void RemoveTrayIcon();
 		void UpdateTrayIcon();
@@ -53,6 +55,7 @@ namespace sm {
 		void OnTimer();
 		void OnEnableClick();
 		void OnDisableClick();
+		void OnStartupLoadingClick();
 
 		static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		static BOOL CALLBACK TimePickProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
@@ -62,6 +65,7 @@ namespace sm {
 
 		HWND window_;
 		HMENU menu_;
+		HMENU submenu_;
 		HICON active_icon_;
 		HICON passive_icon_;
 		NOTIFYICONDATA ni_data_;

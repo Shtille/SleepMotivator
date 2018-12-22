@@ -21,6 +21,8 @@ namespace sm {
 
 		bool updating() const;
 		bool enabled() const;
+		bool startup_loading() const;
+		void toggle_startup_loading();
 		void toggle_enabled();
 		void set_get_up_hours(int value);
 		void set_get_up_minutes(int value);
@@ -61,6 +63,7 @@ namespace sm {
 		int notification_minutes_; // notification time before the shutdown takes place
 		bool updating_; // trick to not let spam multiply messages
 		bool enabled_;
+		bool startup_loading_; // whether laoding on system startup
 	};
 
 } // namespace sm
