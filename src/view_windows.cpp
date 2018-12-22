@@ -81,20 +81,20 @@ namespace sm {
 	}
 	MessageBoxResult WinView::MessageBox(const std::string & title, const std::string & message, MessageBoxKind kind, MessageBoxIcon icon)
 	{
-		UINT type;
+		UINT type = MB_TOPMOST;
 		switch (kind)
 		{
 		case MessageBoxKind::kOk:
-			type = MB_OK;
+			type |= MB_OK;
 			break;
 		case MessageBoxKind::kOkCancel:
-			type = MB_OKCANCEL;
+			type |= MB_OKCANCEL;
 			break;
 		case MessageBoxKind::kYesNo:
-			type = MB_YESNO;
+			type |= MB_YESNO;
 			break;
 		default: // just to silence possible warning
-			type = MB_OK;
+			type |= MB_OK;
 			break;
 		}
 		switch (icon)
@@ -232,7 +232,7 @@ namespace sm {
 		HKEY hkey = NULL;
 		RegCreateKeyA(HKEY_CURRENT_USER, TEXT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"), &hkey);
 		if (model_->startup_loading())
-			RegSetValueExA(hkey, kApplicationClassName, 0, REG_SZ, (BYTE*)szFileName, 0);
+			RegSetValueExA(hkey, kApplicationClassName, 0, REG_SZ, (BYTE*)szFileName, strlen(szFileName) * sizeof(CHAR));
 		else
 			RegDeleteValueA(hkey, kApplicationClassName);
 		RegCloseKey(hkey);
@@ -460,6 +460,7 @@ namespace sm {
 	BOOL WinView::TimePickProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		static WinView::DialogData * data = NULL;
+		LONG ex_style;
 		HWND control_hwnd;
 		TCHAR buffer[8];
 		RECT rc;
@@ -469,6 +470,10 @@ namespace sm {
 		{
 		case WM_INITDIALOG:
 			data = (WinView::DialogData *)lParam;
+			// Make it top window
+			ex_style = GetWindowLongA(hwndDlg, GWL_EXSTYLE);
+			ex_style |= WS_EX_TOPMOST;
+			SetWindowLongA(hwndDlg, GWL_EXSTYLE, ex_style);
 			// Center dialog window
 			GetWindowRect(hwndDlg, &rc);
 			x = (GetSystemMetrics(SM_CXSCREEN) - rc.right) / 2;
