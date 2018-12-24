@@ -32,6 +32,9 @@
 
 #include <CommCtrl.h>
 
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "advapi32.lib")
+
 // Enable visual styles
 // See https://docs.microsoft.com/en-us/windows/desktop/controls/cookbook-overview for details
 #ifdef _WIN64
@@ -139,10 +142,30 @@ namespace sm {
 	}
 	void WinView::ShutdownTheSystem()
 	{
-		if (0 == ::InitiateSystemShutdownExA(NULL, "The sleep time has come!", 10, FALSE, FALSE, SHTDN_REASON_MAJOR_APPLICATION | SHTDN_REASON_FLAG_PLANNED))
-		{
-			MessageBoxA(window_, "We've failed to start the shutdown", "So sad", MB_OK | MB_ICONINFORMATION);
-		}
+		HANDLE hToken;
+		TOKEN_PRIVILEGES tkp;
+
+		// Get a token for this process. 
+		if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken))
+			return;
+
+		// Get the LUID for the shutdown privilege. 
+		LookupPrivilegeValue(NULL, SE_SHUTDOWN_NAME, &tkp.Privileges[0].Luid);
+
+		tkp.PrivilegeCount = 1;  // one privilege to set
+		tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+
+		// Get the shutdown privilege for this process. 
+		AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, (PTOKEN_PRIVILEGES)NULL, 0);
+
+		if (GetLastError() != ERROR_SUCCESS)
+			return;
+
+		// Shut down the system and force all applications to close. 
+		if (!ExitWindowsEx(EWX_SHUTDOWN | EWX_FORCE, SHTDN_REASON_MAJOR_APPLICATION | SHTDN_REASON_FLAG_PLANNED))
+			return;
+
+		// Shutdown was successful
 	}
 	ATOM WinView::MyRegisterClass(HINSTANCE hInstance)
 	{
