@@ -68,6 +68,7 @@ namespace sm {
 		void ShowContextMenu();
 		void UpdateContextMenu();
 
+		void ReadLoadingOnStartupValueFromRegistry();
 		void MakeLoadingOnStartup();
 
 		void AddTrayIcon();

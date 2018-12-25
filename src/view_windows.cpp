@@ -184,6 +184,7 @@ namespace sm {
 	}
 	bool WinView::Initialize(HINSTANCE hInstance)
 	{
+		// Create window
 		window_ = CreateWindowA(kApplicationClassName, kApplicationTitle, WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
 
@@ -247,6 +248,21 @@ namespace sm {
 		else
 			CheckMenuItem(submenu_, CONTEXT_MENU_ITEM__SETTINGS_STURTUP, MF_UNCHECKED);
 	}
+	void WinView::ReadLoadingOnStartupValueFromRegistry()
+	{
+		HKEY hkey = NULL;
+		if (RegOpenKeyA(HKEY_CURRENT_USER, TEXT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"), &hkey) == ERROR_SUCCESS)
+		{
+			DWORD dwType;
+			if (RegQueryValueExA(hkey, kApplicationClassName, NULL, &dwType, NULL, NULL) == ERROR_SUCCESS)
+			{
+				// Value exists
+				if (!model_->startup_loading())
+					model_->toggle_startup_loading();
+			}
+			RegCloseKey(hkey);
+		}
+	}
 	void WinView::MakeLoadingOnStartup()
 	{
 		CHAR szFileName[MAX_PATH];
@@ -268,6 +284,9 @@ namespace sm {
 			delete model_;
 			return false;
 		}
+
+		// Read registry value for startup loading
+		ReadLoadingOnStartupValueFromRegistry();
 
 		// Update menu items due to model loading
 		UpdateContextMenu();
