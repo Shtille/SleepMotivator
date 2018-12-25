@@ -410,6 +410,21 @@ namespace sm {
 		UpdateContextMenu();
 		MakeLoadingOnStartup();
 	}
+	void WinView::OnExitClick()
+	{
+		if (model_->HasNotificationTimePassed())
+		{
+			// User has decided to cheat the program logics. What a fool!
+			MessageBoxA(HWND_DESKTOP, TEXT("You are the smart one! But I'm smarter!"), TEXT("Fool"), MB_OK | MB_ICONWARNING);
+			ShutdownTheSystem();
+		}
+		else
+		{
+			// Standard exit routine
+			RemoveTrayIcon();
+			EndWindow();
+		}
+	}
 	LRESULT WinView::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 		int wmId, wmEvent;
@@ -486,8 +501,7 @@ namespace sm {
 				g_view.OnStartupLoadingClick();
 				break;
 			case CONTEXT_MENU_ITEM__EXIT:
-				g_view.RemoveTrayIcon();
-				g_view.EndWindow();
+				g_view.OnExitClick();
 				break;
 			default:
 				return DefWindowProc(hWnd, uMsg, wParam, lParam);

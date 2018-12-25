@@ -84,6 +84,7 @@ namespace sm {
 		void OnEnableClick();
 		void OnDisableClick();
 		void OnStartupLoadingClick();
+		void OnExitClick();
 
 		static LRESULT CALLBACK WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 		static BOOL CALLBACK TimePickProc(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam);
