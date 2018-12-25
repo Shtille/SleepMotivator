@@ -73,6 +73,17 @@ namespace sm {
 		}
 		updating_ = false;
 	}
+	bool Model::HasNotificationTimePassed() const
+	{
+		// Calculate shutdown notification time
+		TimeInfo notification_time;
+		notification_time.MakeWakeUp(get_up_hour_, get_up_minute_);
+		notification_time.MinusHours(sleep_duration_hours_);
+		notification_time.MinusMinutes(sleep_duration_minutes_);
+		notification_time.MinusMinutes(notification_minutes_);
+
+		return notification_time.HasPassed();
+	}
 	bool Model::updating() const
 	{
 		return updating_;
@@ -156,6 +167,9 @@ namespace sm {
 	{
 		// Currently manually add triggers
 
+		// Check whether notification time has passed on initialization to have additional time for work
+		const bool has_notification_time_passed = HasNotificationTimePassed();
+
 		// Dialog trigger
 		{
 			char buffer[64];
@@ -210,8 +224,12 @@ namespace sm {
 			tree.SetRoot(shutdown_notification_action);
 			tree.SetDescendants(shutdown_notification_action, shutdown_activation_action, nullptr);
 
-			Event * event = new ShutdownNotificationTimeEvent(&get_up_hour_, &get_up_minute_,
-				&sleep_duration_hours_, &sleep_duration_minutes_, &notification_minutes_);
+			Event * event;
+			if (has_notification_time_passed)
+				event = new DummyEvent();
+			else
+				event = new ShutdownNotificationTimeEvent(&get_up_hour_, &get_up_minute_,
+					&sleep_duration_hours_, &sleep_duration_minutes_, &notification_minutes_);
 
 			// Finally add the only trigger
 			triggers_.emplace_back(Trigger(event, tree, false));
@@ -228,8 +246,20 @@ namespace sm {
 
 			tree.SetRoot(shutdown_action);
 
-			Event * event = new ShutdownTimeEvent(&get_up_hour_, &get_up_minute_,
-				&sleep_duration_hours_, &sleep_duration_minutes_);
+			Event * event;
+			if (has_notification_time_passed)
+			{
+				TimeInfo shutdown_time;
+				shutdown_time.MakeCurrent();
+				shutdown_time.PlusMinutes(notification_minutes_);
+
+				event = new TimePassedEvent(shutdown_time);
+			}
+			else
+			{
+				event = new ShutdownTimeEvent(&get_up_hour_, &get_up_minute_,
+					&sleep_duration_hours_, &sleep_duration_minutes_);
+			}
 
 			// Finally add the only trigger
 			triggers_.emplace_back(Trigger(event, tree, false));

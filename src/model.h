@@ -45,6 +45,8 @@ namespace sm {
 
 		void Update();
 
+		bool HasNotificationTimePassed() const;
+
 		bool updating() const;
 		bool enabled() const;
 		bool startup_loading() const;

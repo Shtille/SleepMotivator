@@ -30,6 +30,20 @@
 
 namespace sm {
 
+	void TimeInfo::MakeCurrent()
+	{
+		// Get local time information
+		time_t raw_time;
+		tm time_info;
+
+		time(&raw_time);
+		localtime_s(&time_info, &raw_time);
+
+		minute = time_info.tm_min;
+		hour = time_info.tm_hour;
+		year_day = time_info.tm_yday;
+		year = time_info.tm_year;
+	}
 	void TimeInfo::Make(int hours, int minutes)
 	{
 		// Get local time information
@@ -81,6 +95,26 @@ namespace sm {
 			}
 		}
 	}
+	void TimeInfo::PlusMinutes(int minutes)
+	{
+		minute += minutes;
+		if (minute > 59)
+		{
+			minute -= 60;
+			++hour;
+			if (hour > 23)
+			{
+				hour -= 24;
+				++year_day;
+				if (year_day > 365)
+				{
+					// TODO: Add check 365 or 366 days per year
+					year_day -= 366;
+					++year;
+				}
+			}
+		}
+	}
 	void TimeInfo::MinusHours(int hours)
 	{
 		hour -= hours;
@@ -114,6 +148,22 @@ namespace sm {
 			year_day -= 366;
 			++year;
 		}
+	}
+	bool TimeInfo::HasPassed() const
+	{
+		time_t raw_time;
+		tm time_info;
+
+		time(&raw_time);
+		localtime_s(&time_info, &raw_time);
+
+		bool time_passed =
+			(time_info.tm_year >  year) ||
+			(time_info.tm_year == year && time_info.tm_yday > year_day) ||
+			(time_info.tm_yday == year_day && time_info.tm_hour > hour) ||
+			(time_info.tm_hour == hour && time_info.tm_min >= minute);
+
+		return time_passed;
 	}
 
 } // namespace sm

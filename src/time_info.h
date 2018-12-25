@@ -35,13 +35,17 @@ namespace sm {
 		int year_day;	// days since January 1 - [0, 365]
 		int year;		// years since 1900
 
+		void MakeCurrent();
 		void Make(int hours, int minutes);
 		void MakeWakeUp(int hours, int minutes);
 
 		void MinusMinutes(int minutes);
+		void PlusMinutes(int minutes);
 		void MinusHours(int hours);
 		void MinusDays(int days);
 		void PlusDays(int days);
+
+		bool HasPassed() const;
 	};
 
 } // namespace sm
