@@ -30,6 +30,20 @@
 
 namespace sm {
 
+	static int kDaysInYear = 365;
+
+	static inline bool IsLeapYear(int year)
+	{
+		return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+	}
+	static inline int GetNumberOfDaysInYear(int year)
+	{
+		if (IsLeapYear(year))
+			return 366;
+		else
+			return 365;
+	}
+
 	void TimeInfo::MakeCurrent()
 	{
 		// Get local time information
@@ -88,8 +102,7 @@ namespace sm {
 				--year_day;
 				if (year_day < 0)
 				{
-					// TODO: Add check 365 or 366 days per year
-					year_day += 366;
+					year_day += kDaysInYear;
 					--year;
 				}
 			}
@@ -106,10 +119,9 @@ namespace sm {
 			{
 				hour -= 24;
 				++year_day;
-				if (year_day > 365)
+				if (year_day >= kDaysInYear)
 				{
-					// TODO: Add check 365 or 366 days per year
-					year_day -= 366;
+					year_day -= kDaysInYear;
 					++year;
 				}
 			}
@@ -124,8 +136,7 @@ namespace sm {
 			--year_day;
 			if (year_day < 0)
 			{
-				// TODO: Add check 365 or 366 days per year
-				year_day += 366;
+				year_day += kDaysInYear;
 				--year;
 			}
 		}
@@ -135,17 +146,16 @@ namespace sm {
 		year_day -= days;
 		if (year_day < 0)
 		{
-			// TODO: Add check 365 or 366 days per year
-			year_day += 366;
+			year_day += kDaysInYear;
 			--year;
 		}
 	}
 	void TimeInfo::PlusDays(int days)
 	{
 		year_day += days;
-		if (year_day > 365) // or 364?
+		if (year_day >= kDaysInYear)
 		{
-			year_day -= 366;
+			year_day -= kDaysInYear;
 			++year;
 		}
 	}
@@ -164,6 +174,17 @@ namespace sm {
 			(time_info.tm_hour == hour && time_info.tm_min >= minute);
 
 		return time_passed;
+	}
+
+	void TimeInfo::CalculateNumberOfDaysInYear()
+	{
+		time_t raw_time;
+		tm time_info;
+
+		time(&raw_time);
+		localtime_s(&time_info, &raw_time);
+
+		kDaysInYear = GetNumberOfDaysInYear(time_info.tm_year + 1900);
 	}
 
 } // namespace sm

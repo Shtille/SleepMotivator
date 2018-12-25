@@ -46,6 +46,8 @@ namespace sm {
 		void PlusDays(int days);
 
 		bool HasPassed() const;
+
+		static void CalculateNumberOfDaysInYear();
 	};
 
 } // namespace sm
