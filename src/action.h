@@ -150,6 +150,14 @@ namespace sm {
 		virtual Action * Execute(View * view) final;
 	};
 
+	//! Logics disable action class
+	class DisableAction : public Action {
+	public:
+		DisableAction();
+
+		virtual Action * Execute(View * view) final;
+	};
+
 } // namespace sm
 
 #endif

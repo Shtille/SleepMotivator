@@ -167,6 +167,11 @@ namespace sm {
 
 		// Shutdown was successful
 	}
+	void WinView::DisableModel()
+	{
+		if (model_->enabled())
+			OnDisableClick();
+	}
 	ATOM WinView::MyRegisterClass(HINSTANCE hInstance)
 	{
 		WNDCLASSEXA window_class;
@@ -412,7 +417,7 @@ namespace sm {
 	}
 	void WinView::OnExitClick()
 	{
-		if (model_->HasNotificationTimePassed())
+		if (model_->enabled() && model_->HasNotificationTimePassed())
 		{
 			// User has decided to cheat the program logics. What a fool!
 			MessageBoxA(HWND_DESKTOP, TEXT("You are the smart one! But I'm smarter!"), TEXT("Fool"), MB_OK | MB_ICONWARNING);

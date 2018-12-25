@@ -184,6 +184,7 @@ namespace sm {
 			Action * time_change_action = new TimeChangeAction(&get_up_hour_, &get_up_minute_, &chosen_hour_, &chosen_minute_);
 			Action * notification_action = new NotificationAction("The motivation has begun", "The program has started its job for motivating you!");
 			Action * activate_action = new TriggerEnableAction(triggers_, 1, true);
+			Action * disable_action = new DisableAction();
 
 			// Construct the tree
 			ActionTree tree;
@@ -195,6 +196,7 @@ namespace sm {
 			tree.Add(time_change_action);
 			tree.Add(notification_action);
 			tree.Add(activate_action);
+			tree.Add(disable_action);
 
 			tree.SetRoot(get_up_action);
 			tree.SetDescendants(get_up_action, get_up_time_action, chill_action);
@@ -202,6 +204,7 @@ namespace sm {
 			tree.SetDescendants(time_pick_action, time_change_action, notification_action);
 			tree.SetDescendants(time_change_action, notification_action, nullptr);
 			tree.SetDescendants(notification_action, activate_action, nullptr);
+			tree.SetDescendants(chill_action, disable_action, nullptr);
 
 			// Finally add the only trigger
 			triggers_.emplace_back(Trigger(new DummyEvent(), tree));

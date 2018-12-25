@@ -138,4 +138,13 @@ namespace sm {
 		return next_first_;
 	}
 
+	DisableAction::DisableAction()
+	{
+	}
+	Action * DisableAction::Execute(View * view)
+	{
+		view->DisableModel();
+		return next_first_;
+	}
+
 } // namespace sm

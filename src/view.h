@@ -44,6 +44,7 @@ namespace sm {
 		virtual MessageBoxResult MessageBox(const std::string& title, const std::string& message, MessageBoxKind kind, MessageBoxIcon icon) = 0;
 		virtual bool TimePickDialog(const std::string& title, int * hours_ptr, int * minutes_ptr) = 0; // returns true on <OK> and false on <Cancel>
 		virtual void ShutdownTheSystem() = 0;
+		virtual void DisableModel() = 0;
 	};
 
 } // namespace sm

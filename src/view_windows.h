@@ -55,6 +55,7 @@ namespace sm {
 		virtual MessageBoxResult MessageBox(const std::string& title, const std::string& message, MessageBoxKind kind, MessageBoxIcon icon) final;
 		virtual bool TimePickDialog(const std::string& title, int * hours_ptr, int * minutes_ptr) final;
 		virtual void ShutdownTheSystem() final;
+		virtual void DisableModel() final;
 
 		ATOM MyRegisterClass(HINSTANCE hInstance);
 		bool Initialize(HINSTANCE hInstance);
