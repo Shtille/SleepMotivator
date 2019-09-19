@@ -30,161 +30,64 @@
 
 namespace sm {
 
-	static int kDaysInYear = 365;
-
-	static inline bool IsLeapYear(int year)
+	TimeInfo::TimeInfo()
 	{
-		return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
-	}
-	static inline int GetNumberOfDaysInYear(int year)
-	{
-		if (IsLeapYear(year))
-			return 366;
-		else
-			return 365;
-	}
 
+	}
+	TimeInfo::TimeInfo(const TimeInfo& other)
+		: time_point_(other.time_point_)
+	{
+
+	}
 	void TimeInfo::MakeCurrent()
 	{
-		// Get local time information
-		time_t raw_time;
-		tm time_info;
-
-		time(&raw_time);
-		localtime_s(&time_info, &raw_time);
-
-		minute = time_info.tm_min;
-		hour = time_info.tm_hour;
-		year_day = time_info.tm_yday;
-		year = time_info.tm_year;
+		time_point_ = Clock::now();
 	}
 	void TimeInfo::Make(int hours, int minutes)
 	{
-		// Get local time information
-		time_t raw_time;
-		tm time_info;
+		std::time_t raw_time;
+		std::tm time_info;
 
-		time(&raw_time);
+		time_point_ = Clock::now();
+		raw_time = Clock::to_time_t(time_point_);
 		localtime_s(&time_info, &raw_time);
-
-		minute = minutes;
-		hour = hours;
-		year_day = time_info.tm_yday;
-		year = time_info.tm_year;
+		time_info.tm_hour = hours;
+		time_info.tm_min = minutes;
+		raw_time = std::mktime(&time_info);
+		time_point_ = Clock::from_time_t(raw_time);
 	}
 	void TimeInfo::MakeWakeUp(int hours, int minutes)
 	{
-		// Get local time information
-		time_t raw_time;
-		tm time_info;
+		std::time_t raw_time;
+		std::tm time_info;
 
-		time(&raw_time);
+		time_point_ = Clock::now();
+		raw_time = Clock::to_time_t(time_point_);
 		localtime_s(&time_info, &raw_time);
-
-		minute = minutes;
-		hour = hours;
-		year_day = time_info.tm_yday;
-		year = time_info.tm_year;
-
-		if (time_info.tm_hour > hours)
-			PlusDays(1);
+		bool next_day = time_info.tm_hour > hours;
+		time_info.tm_hour = hours;
+		time_info.tm_min = minutes;
+		raw_time = std::mktime(&time_info);
+		time_point_ = Clock::from_time_t(raw_time);
+		if (next_day)
+			time_point_ += std::chrono::hours(24); // +1 day
 	}
 	void TimeInfo::MinusMinutes(int minutes)
 	{
-		minute -= minutes;
-		if (minute < 0)
-		{
-			minute += 60;
-			--hour;
-			if (hour < 0)
-			{
-				hour += 24;
-				--year_day;
-				if (year_day < 0)
-				{
-					year_day += kDaysInYear;
-					--year;
-				}
-			}
-		}
+		time_point_ -= std::chrono::minutes(minutes);
 	}
 	void TimeInfo::PlusMinutes(int minutes)
 	{
-		minute += minutes;
-		if (minute > 59)
-		{
-			minute -= 60;
-			++hour;
-			if (hour > 23)
-			{
-				hour -= 24;
-				++year_day;
-				if (year_day >= kDaysInYear)
-				{
-					year_day -= kDaysInYear;
-					++year;
-				}
-			}
-		}
+		time_point_ += std::chrono::minutes(minutes);
 	}
 	void TimeInfo::MinusHours(int hours)
 	{
-		hour -= hours;
-		if (hour < 0)
-		{
-			hour += 24;
-			--year_day;
-			if (year_day < 0)
-			{
-				year_day += kDaysInYear;
-				--year;
-			}
-		}
-	}
-	void TimeInfo::MinusDays(int days)
-	{
-		year_day -= days;
-		if (year_day < 0)
-		{
-			year_day += kDaysInYear;
-			--year;
-		}
-	}
-	void TimeInfo::PlusDays(int days)
-	{
-		year_day += days;
-		if (year_day >= kDaysInYear)
-		{
-			year_day -= kDaysInYear;
-			++year;
-		}
+		time_point_ -= std::chrono::hours(hours);
 	}
 	bool TimeInfo::HasPassed() const
 	{
-		time_t raw_time;
-		tm time_info;
-
-		time(&raw_time);
-		localtime_s(&time_info, &raw_time);
-
-		bool time_passed =
-			(time_info.tm_year >  year) ||
-			(time_info.tm_year == year && time_info.tm_yday > year_day) ||
-			(time_info.tm_yday == year_day && time_info.tm_hour > hour) ||
-			(time_info.tm_hour == hour && time_info.tm_min >= minute);
-
-		return time_passed;
-	}
-
-	void TimeInfo::CalculateNumberOfDaysInYear()
-	{
-		time_t raw_time;
-		tm time_info;
-
-		time(&raw_time);
-		localtime_s(&time_info, &raw_time);
-
-		kDaysInYear = GetNumberOfDaysInYear(time_info.tm_year + 1900);
+		Clock::time_point current_time_point = Clock::now();
+		return time_point_ <= current_time_point;
 	}
 
 } // namespace sm

@@ -27,13 +27,16 @@
 #ifndef __TIME_INFO_H__
 #define __TIME_INFO_H__
 
+#include <chrono>
+
 namespace sm {
 
-	struct TimeInfo {
-		int minute;		// minutes after the hour - [0, 59]
-		int hour;		// hours since midnight - [0, 23]
-		int year_day;	// days since January 1 - [0, 365]
-		int year;		// years since 1900
+	//! Class that incapsulates time point
+	class TimeInfo {
+		typedef std::chrono::system_clock Clock;
+	public:
+		TimeInfo();
+		TimeInfo(const TimeInfo& other);
 
 		void MakeCurrent();
 		void Make(int hours, int minutes);
@@ -42,12 +45,11 @@ namespace sm {
 		void MinusMinutes(int minutes);
 		void PlusMinutes(int minutes);
 		void MinusHours(int hours);
-		void MinusDays(int days);
-		void PlusDays(int days);
 
 		bool HasPassed() const;
 
-		static void CalculateNumberOfDaysInYear();
+	private:
+		Clock::time_point time_point_;
 	};
 
 } // namespace sm

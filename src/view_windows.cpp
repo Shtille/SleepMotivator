@@ -35,6 +35,7 @@
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "advapi32.lib")
 
+/*
 // Enable visual styles
 // See https://docs.microsoft.com/en-us/windows/desktop/controls/cookbook-overview for details
 #ifdef _WIN64
@@ -46,6 +47,7 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
 processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
+*/
 
 #define MY_TRAY_ICON_ID							0x1234
 #define CONTEXT_MENU_ITEM__ENABLE				0x1235
@@ -276,7 +278,7 @@ namespace sm {
 		HKEY hkey = NULL;
 		RegCreateKeyA(HKEY_CURRENT_USER, TEXT("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"), &hkey);
 		if (model_->startup_loading())
-			RegSetValueExA(hkey, kApplicationClassName, 0, REG_SZ, (BYTE*)szFileName, strlen(szFileName) * sizeof(CHAR));
+			RegSetValueExA(hkey, kApplicationClassName, 0, REG_SZ, (BYTE*)szFileName, (DWORD)(strlen(szFileName) * sizeof(CHAR)));
 		else
 			RegDeleteValueA(hkey, kApplicationClassName);
 		RegCloseKey(hkey);
@@ -348,7 +350,7 @@ namespace sm {
 	}
 	bool WinView::ShowTimeDialog()
 	{
-		HINSTANCE hInstance = (HINSTANCE)GetWindowLong(window_, GWL_HINSTANCE);
+		HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(window_, GWLP_HINSTANCE);
 		return DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_TIME_DIALOG), HWND_DESKTOP, (DLGPROC)TimePickProc, (LPARAM)&dialog_data_) == IDOK;
 	}
 	void WinView::ShowTimeSettingsDialog()
@@ -575,14 +577,14 @@ namespace sm {
 				switch (GetDlgCtrlID((HWND)lParam))
 				{
 				case IDC_HOURS_SLIDER:
-					*data->hours_ptr = HIWORD(wParam);
+					*data->hours_ptr = static_cast<int>(HIWORD(wParam));
 					sprintf_s(buffer, "%i", *data->hours_ptr);
 					SetDlgItemText(hwndDlg, IDC_HOURS_STATIC, buffer);
 					sprintf_s(buffer, "%i:%02i", *data->hours_ptr, *data->minutes_ptr);
 					SetDlgItemText(hwndDlg, IDC_TIME_EDIT, buffer);
 					break;
 				case IDC_MINUTES_SLIDER:
-					*data->minutes_ptr = HIWORD(wParam);
+					*data->minutes_ptr = static_cast<int>(HIWORD(wParam));
 					sprintf_s(buffer, "%i", *data->minutes_ptr);
 					SetDlgItemText(hwndDlg, IDC_MINUTES_STATIC, buffer);
 					sprintf_s(buffer, "%i:%02i", *data->hours_ptr, *data->minutes_ptr);
@@ -595,7 +597,7 @@ namespace sm {
 				{
 				case IDC_HOURS_SLIDER:
 					control_hwnd = GetDlgItem(hwndDlg, IDC_HOURS_SLIDER);
-					*data->hours_ptr = SendMessage(control_hwnd, TBM_GETPOS, 0, 0);
+					*data->hours_ptr = static_cast<int>(SendMessage(control_hwnd, TBM_GETPOS, 0, 0));
 					sprintf_s(buffer, "%i", *data->hours_ptr);
 					SetDlgItemText(hwndDlg, IDC_HOURS_STATIC, buffer);
 					sprintf_s(buffer, "%i:%02i", *data->hours_ptr, *data->minutes_ptr);
@@ -603,7 +605,7 @@ namespace sm {
 					break;
 				case IDC_MINUTES_SLIDER:
 					control_hwnd = GetDlgItem(hwndDlg, IDC_MINUTES_SLIDER);
-					*data->minutes_ptr = SendMessage(control_hwnd, TBM_GETPOS, 0, 0);
+					*data->minutes_ptr = static_cast<int>(SendMessage(control_hwnd, TBM_GETPOS, 0, 0));
 					sprintf_s(buffer, "%i", *data->minutes_ptr);
 					SetDlgItemText(hwndDlg, IDC_MINUTES_STATIC, buffer);
 					sprintf_s(buffer, "%i:%02i", *data->hours_ptr, *data->minutes_ptr);

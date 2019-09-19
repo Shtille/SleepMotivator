@@ -51,8 +51,6 @@ namespace sm {
 	}
 	bool Model::Initialize()
 	{
-		TimeInfo::CalculateNumberOfDaysInYear();
-
 		if (!LoadParameters())
 			return false;
 		if (!LoadTriggers())
